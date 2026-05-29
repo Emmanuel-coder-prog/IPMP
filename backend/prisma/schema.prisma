@@ -12,80 +12,45 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Role {
+  ADMIN
+  INVENTORY
+  PROCUREMENT
+}
+
 model User {
-  id              String      @id @default(uuid())
 
-  email           String      @unique
-  password        String
+  id String @id @default(uuid())
 
-  firstName       String
-  lastName        String
+  email String @unique
 
-  isActive        Boolean     @default(true)
+  password String
 
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  firstName String?
 
-  roles           UserRole[]
+  lastName String?
 
-  createdProducts Product[]   @relation("ProductCreator")
+  role Role
 
-  notifications   Notification[]
+  refreshToken String?
 
-  auditLogs       AuditLog[]
-}
+  isActive Boolean @default(true)
 
-model Role {
-  id          String            @id @default(uuid())
+  createdProducts Product[] @relation("ProductCreator")
 
-  name        String            @unique
-  description String?
+  notifications Notification[]
 
-  createdAt   DateTime          @default(now())
-  updatedAt   DateTime          @updatedAt
+  auditLogs AuditLog[]
 
-  users       UserRole[]
+  createdAt DateTime @default(now())
 
-  permissions RolePermission[]
-}
+  updatedAt DateTime @updatedAt
 
-model Permission {
-  id            String            @id @default(uuid())
+  @@index([email])
 
-  action        String            @unique
-  description   String?
+  @@index([role])
 
-  createdAt     DateTime          @default(now())
-
-  roles         RolePermission[]
-}
-
-model RolePermission {
-  id            String        @id @default(uuid())
-
-  roleId         String
-  permissionId   String
-
-  role           Role         @relation(fields: [roleId], references: [id])
-
-  permission     Permission   @relation(fields: [permissionId], references: [id])
-
-  @@unique([roleId, permissionId])
-}
-
-model UserRole {
-  id          String      @id @default(uuid())
-
-  userId      String
-  roleId      String
-
-  assignedAt  DateTime    @default(now())
-
-  user        User        @relation(fields:[userId], references:[id])
-
-  role        Role        @relation(fields:[roleId], references:[id])
-
-  @@unique([userId, roleId])
+  @@map("users")
 }
 
 model Product {
