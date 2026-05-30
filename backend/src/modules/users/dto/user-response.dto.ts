@@ -12,6 +12,10 @@ export class UserResponseDto {
 
   role: Role;
 
+  isActive: boolean;
+
+  lastLoginAt: Date | null;
+
   createdAt: Date;
 
   updatedAt: Date;

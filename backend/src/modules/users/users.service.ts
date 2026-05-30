@@ -1,9 +1,29 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserResponseDto } from './dto/user-response.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { CreateUserDto } from './dto/create-user.dto';
+import { AdminUpdateUserDto } from './dto/admin-update-user.dto';
+import { AdminResetPasswordDto } from './dto/admin-reset-password.dto';
 import * as bcrypt from 'bcrypt';
+
+const userSelect = {
+  id: true,
+  email: true,
+  firstName: true,
+  lastName: true,
+  role: true,
+  isActive: true,
+  lastLoginAt: true,
+  createdAt: true,
+  updatedAt: true,
+  password: false,
+} as const;
 
 @Injectable()
 export class UsersService {
@@ -13,16 +33,7 @@ export class UsersService {
   async findOne(userId: string): Promise<UserResponseDto> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        role: true,
-        createdAt: true,
-        updatedAt: true,
-        password: false,
-      },
+      select: userSelect,
     });
 
     if (!user) {
@@ -33,17 +44,33 @@ export class UsersService {
 
   async findAll(): Promise<UserResponseDto[]> {
     return await this.prisma.user.findMany({
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        role: true,
-        createdAt: true,
-        updatedAt: true,
-        password: false,
-      },
+      select: userSelect,
       orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async create(createUserDto: CreateUserDto): Promise<UserResponseDto> {
+    const existing = await this.prisma.user.findUnique({
+      where: { email: createUserDto.email },
+    });
+    if (existing) {
+      throw new ConflictException('User with this email already exists');
+    }
+
+    const hashedPassword = await bcrypt.hash(
+      createUserDto.password,
+      this.SALT_ROUNDS,
+    );
+
+    return this.prisma.user.create({
+      data: {
+        email: createUserDto.email,
+        password: hashedPassword,
+        role: createUserDto.role,
+        firstName: createUserDto.firstName,
+        lastName: createUserDto.lastName,
+      },
+      select: userSelect,
     });
   }
 
@@ -64,27 +91,65 @@ export class UsersService {
         where: { email: updateUserDto.email },
       });
       if (emailTaken) {
-        throw new NotFoundException('Email is already taken');
+        throw new ConflictException('Email is already taken');
       }
     }
 
-    // Update user profile
-    const updatedUser = await this.prisma.user.update({
+    return this.prisma.user.update({
       where: { id: userId },
       data: updateUserDto,
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        role: true,
-        createdAt: true,
-        updatedAt: true,
-        password: false,
-      },
+      select: userSelect,
+    });
+  }
+
+  async adminUpdate(
+    userId: string,
+    dto: AdminUpdateUserDto,
+  ): Promise<UserResponseDto> {
+    const existingUser = await this.prisma.user.findUnique({
+      where: { id: userId },
     });
 
-    return updatedUser;
+    if (!existingUser) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (dto.email && dto.email !== existingUser.email) {
+      const emailTaken = await this.prisma.user.findUnique({
+        where: { email: dto.email },
+      });
+      if (emailTaken) {
+        throw new ConflictException('Email is already taken');
+      }
+    }
+
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: dto,
+      select: userSelect,
+    });
+  }
+
+  async adminResetPassword(
+    userId: string,
+    dto: AdminResetPasswordDto,
+  ): Promise<{ message: string }> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const hashedPassword = await bcrypt.hash(dto.newPassword, this.SALT_ROUNDS);
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { password: hashedPassword },
+    });
+
+    return { message: 'Password reset successfully' };
   }
 
   async changePassword(

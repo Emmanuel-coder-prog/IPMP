@@ -1,0 +1,141 @@
+'use client';
+
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { productsApi } from '@/lib/api/endpoints';
+import type { Product } from '@/lib/api/types';
+import { toast } from 'sonner';
+import { getErrorMessage } from '@/lib/api/client';
+
+export const productKeys = {
+  all: ['products'] as const,
+  list: (params?: Record<string, unknown>) => ['products', 'list', params] as const,
+  stats: ['products', 'stats'] as const,
+  detail: (id: string) => ['products', id] as const,
+};
+
+export function useProducts(params?: {
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+}) {
+  return useQuery({
+    queryKey: productKeys.list(params),
+    queryFn: async () => {
+      const { data } = await productsApi.list({ limit: 500, ...params });
+      return data;
+    },
+  });
+}
+
+export function useProductStats() {
+  return useQuery({
+    queryKey: productKeys.stats,
+    queryFn: async () => {
+      const { data } = await productsApi.stats();
+      return data;
+    },
+  });
+}
+
+export function useProductMutations() {
+  const qc = useQueryClient();
+
+  const invalidate = () => {
+    void qc.invalidateQueries({ queryKey: productKeys.all });
+  };
+
+  const create = useMutation({
+    mutationFn: productsApi.create,
+    onSuccess: () => {
+      invalidate();
+      toast.success('Product created');
+    },
+    onError: (e) => toast.error(getErrorMessage(e)),
+  });
+
+  const update = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Parameters<typeof productsApi.update>[1] }) =>
+      productsApi.update(id, data),
+    onMutate: async ({ id, data }) => {
+      await qc.cancelQueries({ queryKey: productKeys.all });
+      const queries = qc.getQueriesData<{ data: Product[] }>({ queryKey: productKeys.all });
+      queries.forEach(([key, old]) => {
+        if (!old) return;
+        qc.setQueryData(key, {
+          ...old,
+          data: old.data.map((p) => (p.id === id ? { ...p, ...data } : p)),
+        });
+      });
+    },
+    onSuccess: invalidate,
+    onError: (e) => {
+      invalidate();
+      toast.error(getErrorMessage(e));
+    },
+  });
+
+  const applyCosting = useMutation({
+    mutationFn: ({ id, unitCostPrice }: { id: string; unitCostPrice: number }) =>
+      productsApi.applyCosting(id, unitCostPrice),
+    onSuccess: () => {
+      invalidate();
+      toast.success('Costing saved');
+    },
+    onError: (e) => toast.error(getErrorMessage(e)),
+  });
+
+  const approve = useMutation({
+    mutationFn: ({
+      id,
+      finalSellingPrice,
+      printed,
+    }: {
+      id: string;
+      finalSellingPrice: number;
+      printed: boolean;
+    }) => productsApi.approve(id, finalSellingPrice, printed),
+    onSuccess: () => {
+      invalidate();
+      toast.success('Product approved');
+    },
+    onError: (e) => toast.error(getErrorMessage(e)),
+  });
+
+  const reject = useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason?: string }) =>
+      productsApi.reject(id, reason),
+    onSuccess: () => {
+      invalidate();
+      toast.success('Product rejected');
+    },
+    onError: (e) => toast.error(getErrorMessage(e)),
+  });
+
+  const updatePrinted = useMutation({
+    mutationFn: ({ id, printed }: { id: string; printed: boolean }) =>
+      productsApi.updatePrinted(id, printed),
+    onSuccess: invalidate,
+    onError: (e) => toast.error(getErrorMessage(e)),
+  });
+
+  const updateFinalPrice = useMutation({
+    mutationFn: ({ id, finalSellingPrice }: { id: string; finalSellingPrice: number }) =>
+      productsApi.updateFinalPrice(id, finalSellingPrice),
+    onSuccess: () => {
+      invalidate();
+      toast.success('Final price updated');
+    },
+    onError: (e) => toast.error(getErrorMessage(e)),
+  });
+
+  return {
+    create,
+    update,
+    applyCosting,
+    approve,
+    reject,
+    updatePrinted,
+    updateFinalPrice,
+  };
+}

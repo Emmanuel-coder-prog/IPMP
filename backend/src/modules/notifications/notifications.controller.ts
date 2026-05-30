@@ -26,6 +26,12 @@ export class NotificationsController {
     return this.notificationsService.findForUser(userId, query);
   }
 
+  @Patch('read-all')
+  @HttpCode(HttpStatus.OK)
+  markAllAsRead(@GetUser('id') userId: string) {
+    return this.notificationsService.markAllAsRead(userId);
+  }
+
   @Patch(':id/read')
   @HttpCode(HttpStatus.OK)
   markAsRead(@GetUser('id') userId: string, @Param('id') id: string) {

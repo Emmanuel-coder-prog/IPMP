@@ -24,6 +24,7 @@ model User {
   role         Role
   refreshToken String?
   isActive     Boolean  @default(true)
+  lastLoginAt  DateTime?
 
   createdProducts  Product[] @relation("ProductCreator")
   approvedProducts Product[] @relation("ProductApprover")
@@ -31,6 +32,7 @@ model User {
 
   notifications Notification[]
   auditLogs     AuditLog[]
+  invitations   Invitation[] @relation("InvitedBy")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -152,5 +154,30 @@ enum NotificationType {
   COSTING_COMPLETED
   PRODUCT_APPROVED
   SELLING_PRICE_CHANGED
+  USER_INVITATION_SENT
   SYSTEM
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+}
+
+model Invitation {
+  id          String           @id @default(uuid())
+  email       String
+  role        Role
+  token       String           @unique
+  status      InvitationStatus @default(PENDING)
+  invitedById String
+  invitedBy   User             @relation("InvitedBy", fields: [invitedById], references: [id])
+  expiresAt   DateTime
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@index([email])
+  @@index([status])
+  @@index([token])
+  @@map("invitations")
 }

@@ -1,0 +1,118 @@
+@import 'tailwindcss';
+@import 'ag-grid-community/styles/ag-grid.css';
+@import 'ag-grid-community/styles/ag-theme-quartz.css';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --radius: 0.625rem;
+  --background: #ffffff;
+  --foreground: #242424;
+  --card: #ffffff;
+  --card-foreground: #242424;
+  --popover: #ffffff;
+  --popover-foreground: #242424;
+  --primary: #0fabbb;
+  --primary-foreground: #ffffff;
+  --secondary: #1246ab;
+  --secondary-foreground: #ffffff;
+  --muted: #f4f6f8;
+  --muted-foreground: #6b7280;
+  --accent: #3ebfa8;
+  --accent-foreground: #ffffff;
+  --destructive: #ef4444;
+  --border: #e5e7eb;
+  --input: #e5e7eb;
+  --ring: #0fabbb;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: 'rlig' 1, 'calt' 1;
+  }
+}
+
+.ag-theme-ipmp {
+  --ag-background-color: #ffffff;
+  --ag-header-background-color: #f8fafb;
+  --ag-odd-row-background-color: #fafbfc;
+  --ag-row-hover-color: rgba(15, 171, 187, 0.06);
+  --ag-selected-row-background-color: rgba(15, 171, 187, 0.1);
+  --ag-range-selection-border-color: #0fabbb;
+  --ag-active-color: #0fabbb;
+  --ag-font-family: inherit;
+  --ag-font-size: 13px;
+  --ag-cell-horizontal-border: solid #eef0f2;
+}
+
+.ag-theme-ipmp .ag-cell-inline-editing {
+  box-shadow: inset 0 0 0 2px #0fabbb;
+}
+
+.ag-theme-ipmp .ag-cell-invalid {
+  box-shadow: inset 0 0 0 2px #ef4444;
+  background-color: rgba(239, 68, 68, 0.05);
+}
+
+.spreadsheet-container {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+[cmdk-root] {
+  @apply fixed left-1/2 top-[20%] z-50 w-full max-w-lg -translate-x-1/2 rounded-xl border border-border bg-popover p-2 shadow-lg;
+}
+
+[cmdk-input] {
+  @apply flex h-10 w-full rounded-md border-0 bg-transparent px-3 py-2 text-sm outline-none placeholder:text-muted-foreground;
+}
+
+[cmdk-list] {
+  @apply max-h-72 overflow-y-auto p-1;
+}
+
+[cmdk-item] {
+  @apply relative flex cursor-pointer select-none items-center rounded-md px-3 py-2 text-sm outline-none aria-selected:bg-muted;
+}
+
+[cmdk-empty] {
+  @apply py-6 text-center text-sm text-muted-foreground;
+}
+
+[cmdk-group-heading] {
+  @apply px-2 py-1.5 text-xs font-medium text-muted-foreground;
+}
+
+.spreadsheet-container .ag-root-wrapper {
+  min-width: 900px;
+}

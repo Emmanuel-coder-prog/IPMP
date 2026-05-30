@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -9,6 +10,7 @@ import {
   Prisma,
   Product,
   ProductStatus,
+  Role,
 } from '@prisma/client';
 import { AuditAction } from 'src/common/constants/audit-actions';
 import { EntityType } from 'src/common/constants/entity-types';
@@ -20,8 +22,11 @@ import { PricingService } from '../pricing/pricing.service';
 import { ApproveProductDto } from './dto/approve-product.dto';
 import { CreateProductDto } from './dto/create-product.dto';
 import { ListProductsQueryDto } from './dto/list-products-query.dto';
+import { RejectProductDto } from './dto/reject-product.dto';
 import { UpdateCostingDto } from './dto/update-costing.dto';
 import { UpdateFinalSellingPriceDto } from './dto/update-final-selling-price.dto';
+import { UpdatePrintedDto } from './dto/update-printed.dto';
+import { UpdateProductDto } from './dto/update-product.dto';
 
 const productSelect = {
   id: true,
@@ -300,6 +305,170 @@ export class ProductsService {
     });
 
     return this.formatProduct(updated);
+  }
+
+  async update(
+    id: string,
+    userId: string,
+    userRole: Role,
+    dto: UpdateProductDto,
+  ) {
+    const product = await this.getProductOrThrow(id);
+
+    if (userRole === Role.INVENTORY) {
+      if (dto.unitCostPrice !== undefined) {
+        throw new ForbiddenException('Inventory users cannot edit unit cost price');
+      }
+      if (
+        product.status !== ProductStatus.PENDING_COSTING &&
+        product.status !== ProductStatus.REJECTED
+      ) {
+        throw new BadRequestException(
+          'Inventory can only edit products pending costing or rejected',
+        );
+      }
+    }
+
+    if (dto.sku && dto.sku !== product.sku) {
+      const existing = await this.prisma.product.findUnique({
+        where: { sku: dto.sku },
+      });
+      if (existing) {
+        throw new ConflictException('SKU already exists');
+      }
+    }
+
+    const updateData: Prisma.ProductUpdateInput = {};
+
+    if (dto.sku !== undefined) updateData.sku = dto.sku;
+    if (dto.name !== undefined) updateData.name = dto.name;
+    if (dto.quantity !== undefined) updateData.quantity = dto.quantity;
+    if (dto.unit !== undefined) updateData.unit = dto.unit;
+    if (dto.oldSellingPrice !== undefined) {
+      updateData.oldSellingPrice = toDecimal(dto.oldSellingPrice);
+    }
+
+    if (dto.unitCostPrice !== undefined && userRole === Role.ADMIN) {
+      const quantity = dto.quantity ?? product.quantity;
+      const pricing = await this.pricingService.calculatePricing({
+        unitCostPrice: dto.unitCostPrice,
+        quantity,
+      });
+
+      updateData.unitCostPrice = toDecimal(dto.unitCostPrice);
+      updateData.totalCostPrice = pricing.totalCostPrice;
+      updateData.investmentFund = pricing.investmentFund;
+      updateData.operationProfit = pricing.operationProfit;
+      updateData.netProfit = pricing.netProfit;
+      updateData.payrollFund = pricing.payrollFund;
+      updateData.otherCosts = pricing.otherCosts;
+      updateData.grossProfit = pricing.grossProfit;
+      updateData.priceBeforeTax = pricing.priceBeforeTax;
+      updateData.minimum20Percent = pricing.minimum20Percent;
+      updateData.minimum4Percent = pricing.minimum4Percent;
+
+      if (product.status === ProductStatus.PENDING_COSTING) {
+        updateData.status = ProductStatus.COSTING_COMPLETED;
+        updateData.costingCompletedBy = { connect: { id: userId } };
+      }
+    }
+
+    const updated = await this.prisma.product.update({
+      where: { id },
+      data: updateData,
+      select: productSelect,
+    });
+
+    await this.auditService.logAction({
+      userId,
+      action: AuditAction.PRODUCT_UPDATED,
+      entityType: EntityType.Product,
+      entityId: id,
+      oldValue: this.serializeProduct(product),
+      newValue: this.serializeProduct(updated),
+    });
+
+    return this.formatProduct(updated);
+  }
+
+  async reject(id: string, userId: string, dto: RejectProductDto) {
+    const product = await this.getProductOrThrow(id);
+
+    if (
+      product.status !== ProductStatus.COSTING_COMPLETED &&
+      product.status !== ProductStatus.PENDING_COSTING
+    ) {
+      throw new BadRequestException(
+        'Only products pending approval can be rejected',
+      );
+    }
+
+    const updated = await this.prisma.product.update({
+      where: { id },
+      data: { status: ProductStatus.REJECTED },
+      select: productSelect,
+    });
+
+    await this.auditService.logAction({
+      userId,
+      action: AuditAction.PRODUCT_REJECTED,
+      entityType: EntityType.Product,
+      entityId: id,
+      oldValue: this.serializeProduct(product),
+      newValue: {
+        ...this.serializeProduct(updated),
+        reason: dto.reason,
+      },
+    });
+
+    await this.notificationsService.createNotification({
+      userId: product.createdById,
+      title: 'Product rejected',
+      message: dto.reason
+        ? `Product ${updated.name} was rejected: ${dto.reason}`
+        : `Product ${updated.name} was rejected`,
+      type: NotificationType.SYSTEM,
+    });
+
+    return this.formatProduct(updated);
+  }
+
+  async updatePrinted(id: string, userId: string, dto: UpdatePrintedDto) {
+    const product = await this.getProductOrThrow(id);
+
+    const updated = await this.prisma.product.update({
+      where: { id },
+      data: { printed: dto.printed },
+      select: productSelect,
+    });
+
+    await this.auditService.logAction({
+      userId,
+      action: AuditAction.PRODUCT_UPDATED,
+      entityType: EntityType.Product,
+      entityId: id,
+      oldValue: { printed: product.printed },
+      newValue: { printed: dto.printed },
+    });
+
+    return this.formatProduct(updated);
+  }
+
+  async getStats() {
+    const [total, pendingCosting, approved, rejected] = await Promise.all([
+      this.prisma.product.count(),
+      this.prisma.product.count({
+        where: { status: ProductStatus.PENDING_COSTING },
+      }),
+      this.prisma.product.count({
+        where: { status: ProductStatus.APPROVED },
+      }),
+      this.prisma.product.count({
+        where: { status: ProductStatus.REJECTED },
+      }),
+    ]);
+
+    return { total, pendingCosting, approved, rejected };
   }
 
   private async getProductOrThrow(id: string): Promise<Product> {

@@ -8,6 +8,7 @@ import { ProductsModule } from './modules/products/products.module';
 import { PricingModule } from './modules/pricing/pricing.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { InvitationsModule } from './modules/invitations/invitations.module';
 import { ConfigModule } from '@nestjs/config/dist/config.module';
 
 @Module({
@@ -23,6 +24,7 @@ import { ConfigModule } from '@nestjs/config/dist/config.module';
     PricingModule,
     AuditModule,
     NotificationsModule,
+    InvitationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

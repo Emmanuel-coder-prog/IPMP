@@ -16,8 +16,11 @@ import { RolesGuard } from 'src/common/guards/roles.guard';
 import { ApproveProductDto } from './dto/approve-product.dto';
 import { CreateProductDto } from './dto/create-product.dto';
 import { ListProductsQueryDto } from './dto/list-products-query.dto';
+import { RejectProductDto } from './dto/reject-product.dto';
 import { UpdateCostingDto } from './dto/update-costing.dto';
 import { UpdateFinalSellingPriceDto } from './dto/update-final-selling-price.dto';
+import { UpdatePrintedDto } from './dto/update-printed.dto';
+import { UpdateProductDto } from './dto/update-product.dto';
 import { ProductsService } from './products.service';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -31,6 +34,12 @@ export class ProductsController {
     return this.productsService.create(userId, dto);
   }
 
+  @Get('stats')
+  @Roles(Role.ADMIN)
+  getStats() {
+    return this.productsService.getStats();
+  }
+
   @Get()
   findAll(@Query() query: ListProductsQueryDto) {
     return this.productsService.findAll(query);
@@ -39,6 +48,17 @@ export class ProductsController {
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.productsService.findOne(id);
+  }
+
+  @Patch(':id')
+  @Roles(Role.ADMIN, Role.INVENTORY)
+  update(
+    @Param('id') id: string,
+    @GetUser('id') userId: string,
+    @GetUser('role') userRole: Role,
+    @Body() dto: UpdateProductDto,
+  ) {
+    return this.productsService.update(id, userId, userRole, dto);
   }
 
   @Patch(':id/costing')
@@ -59,6 +79,26 @@ export class ProductsController {
     @Body() dto: ApproveProductDto,
   ) {
     return this.productsService.approve(id, userId, dto);
+  }
+
+  @Patch(':id/reject')
+  @Roles(Role.ADMIN)
+  reject(
+    @Param('id') id: string,
+    @GetUser('id') userId: string,
+    @Body() dto: RejectProductDto,
+  ) {
+    return this.productsService.reject(id, userId, dto);
+  }
+
+  @Patch(':id/printed')
+  @Roles(Role.ADMIN)
+  updatePrinted(
+    @Param('id') id: string,
+    @GetUser('id') userId: string,
+    @Body() dto: UpdatePrintedDto,
+  ) {
+    return this.productsService.updatePrinted(id, userId, dto);
   }
 
   @Patch(':id/final-selling-price')

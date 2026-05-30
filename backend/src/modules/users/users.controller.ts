@@ -7,6 +7,7 @@ import {
   HttpStatus,
   Param,
   Patch,
+  Post,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -20,33 +21,38 @@ import { Role } from '@prisma/client';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { GetUser } from 'src/common/decorators/get-user.decorator';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { CreateUserDto } from './dto/create-user.dto';
+import { AdminUpdateUserDto } from './dto/admin-update-user.dto';
+import { AdminResetPasswordDto } from './dto/admin-reset-password.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  //   Get current user profile
   @Get('me')
   async getProfile(@Req() req: RequestWithUser): Promise<UserResponseDto> {
     return await this.usersService.findOne(req.user.id);
   }
 
-  // Get all users (for admin purposes)
   @Get()
   @Roles(Role.ADMIN)
   async findAll(): Promise<UserResponseDto[]> {
     return await this.usersService.findAll();
   }
 
-  // Get user by ID (for admin purposes)
+  @Post()
+  @Roles(Role.ADMIN)
+  async create(@Body() dto: CreateUserDto): Promise<UserResponseDto> {
+    return await this.usersService.create(dto);
+  }
+
   @Get(':id')
   @Roles(Role.ADMIN)
   async findOne(@Param('id') id: string): Promise<UserResponseDto> {
     return await this.usersService.findOne(id);
   }
 
-  // Update current user profile
   @Patch('me')
   async updateProfile(
     @GetUser('id') userId: string,
@@ -55,7 +61,6 @@ export class UsersController {
     return await this.usersService.update(userId, updateUserDto);
   }
 
-  // Change curren tuser password
   @Patch('me/password')
   @HttpCode(HttpStatus.OK)
   async changePassword(
@@ -65,7 +70,25 @@ export class UsersController {
     return await this.usersService.changePassword(userId, changePasswordDto);
   }
 
-  // Delete current user account
+  @Patch(':id')
+  @Roles(Role.ADMIN)
+  async adminUpdate(
+    @Param('id') id: string,
+    @Body() dto: AdminUpdateUserDto,
+  ): Promise<UserResponseDto> {
+    return await this.usersService.adminUpdate(id, dto);
+  }
+
+  @Post(':id/reset-password')
+  @Roles(Role.ADMIN)
+  @HttpCode(HttpStatus.OK)
+  async adminResetPassword(
+    @Param('id') id: string,
+    @Body() dto: AdminResetPasswordDto,
+  ): Promise<{ message: string }> {
+    return await this.usersService.adminResetPassword(id, dto);
+  }
+
   @Delete('me')
   @HttpCode(HttpStatus.OK)
   async deleteAccount(
@@ -74,7 +97,6 @@ export class UsersController {
     return await this.usersService.remove(userId);
   }
 
-  // Delete user by ID (for admin purposes)
   @Delete(':id')
   @Roles(Role.ADMIN)
   @HttpCode(HttpStatus.OK)
