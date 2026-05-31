@@ -4,10 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import {
-  InvitationStatus,
-  NotificationType,
-} from '@prisma/client';
+import { InvitationStatus, NotificationType } from '@prisma/client';
 import { randomBytes } from 'crypto';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -37,7 +34,9 @@ export class InvitationsService {
       where: { email: dto.email, status: InvitationStatus.PENDING },
     });
     if (pending) {
-      throw new ConflictException('A pending invitation already exists for this email');
+      throw new ConflictException(
+        'A pending invitation already exists for this email',
+      );
     }
 
     const token = randomBytes(32).toString('hex');
@@ -83,10 +82,7 @@ export class InvitationsService {
     const expiredIds: string[] = [];
 
     const data = invitations.map((inv) => {
-      if (
-        inv.status === InvitationStatus.PENDING &&
-        inv.expiresAt < now
-      ) {
+      if (inv.status === InvitationStatus.PENDING && inv.expiresAt < now) {
         expiredIds.push(inv.id);
         return { ...inv, status: InvitationStatus.EXPIRED };
       }

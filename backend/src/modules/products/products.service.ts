@@ -317,7 +317,9 @@ export class ProductsService {
 
     if (userRole === Role.INVENTORY) {
       if (dto.unitCostPrice !== undefined) {
-        throw new ForbiddenException('Inventory users cannot edit unit cost price');
+        throw new ForbiddenException(
+          'Inventory users cannot edit unit cost price',
+        );
       }
       if (
         product.status !== ProductStatus.PENDING_COSTING &&
