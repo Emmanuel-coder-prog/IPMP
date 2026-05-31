@@ -38,10 +38,7 @@ export class InvitationsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Post()
   @Roles(Role.ADMIN)
-  create(
-    @GetUser('id') userId: string,
-    @Body() dto: CreateInvitationDto,
-  ) {
+  create(@GetUser('id') userId: string, @Body() dto: CreateInvitationDto) {
     return this.invitationsService.create(userId, dto);
   }
 
