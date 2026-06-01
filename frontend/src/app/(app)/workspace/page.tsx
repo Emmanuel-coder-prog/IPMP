@@ -93,10 +93,10 @@ export default function WorkspacePage() {
     <AppShell title="Admin Workspace" allowedRoles={['ADMIN']}>
       <WorkflowPipeline />
       <div className="mb-4 mt-4">
-        <p className="text-sm text-muted-foreground">
+        {/* <p className="text-sm text-muted-foreground">
           Unified spreadsheet — manage products, costing, approvals, and pricing inline. New rows
           save when you finish entering both SKU and product name.
-        </p>
+        </p> */}
       </div>
       {isError && error ? <ProductsLoadError error={error} /> : null}
       <SpreadsheetGrid

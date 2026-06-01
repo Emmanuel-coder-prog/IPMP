@@ -48,7 +48,7 @@ export default function DashboardPage() {
       <div className="space-y-6">
         <div>
           <h2 className="text-2xl font-semibold tracking-tight">Operational Overview</h2>
-          <p className="text-muted-foreground">Clean executive control center</p>
+          {/* <p className="text-muted-foreground">Clean executive control center</p> */}
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
