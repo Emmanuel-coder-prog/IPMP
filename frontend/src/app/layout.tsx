@@ -5,6 +5,7 @@ import { QueryProvider } from '@/providers/query-provider';
 import { AuthProvider } from '@/providers/auth-provider';
 import { RealtimeProvider } from '@/providers/realtime-provider';
 import './globals.css';
+import { TooltipProvider } from '@/components/ui/tooltip';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
 
@@ -23,10 +24,12 @@ export default function RootLayout({
       <body className={`${inter.variable} font-sans`}>
         <QueryProvider>
           <AuthProvider>
-            <RealtimeProvider>
-              {children}
-              <Toaster position="top-right" richColors closeButton />
-            </RealtimeProvider>
+            <TooltipProvider>
+              <RealtimeProvider>
+                {children}
+                <Toaster position="top-right" richColors closeButton />
+              </RealtimeProvider>
+            </TooltipProvider>
           </AuthProvider>
         </QueryProvider>
       </body>

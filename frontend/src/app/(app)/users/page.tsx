@@ -13,6 +13,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -144,14 +149,28 @@ export default function UsersPage() {
                           });
                         }}
                       >
-                        <Pencil className="h-4 w-4" />
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <Pencil className="h-4 w-4" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Edit User</p>
+                          </TooltipContent>
+                        </Tooltip>
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => setResetUser(user)}
                       >
-                        <KeyRound className="h-4 w-4" />
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <KeyRound className="h-4 w-4" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Reset Password</p>
+                          </TooltipContent>
+                        </Tooltip>
                       </Button>
                       <Button
                         variant="ghost"
@@ -167,7 +186,14 @@ export default function UsersPage() {
                           }
                         }}
                       >
-                        <UserX className="h-4 w-4" />
+                        <Tooltip>
+                          <TooltipTrigger>
+                            <UserX className="h-4 w-4" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{user.isActive !== false ? 'Deactivate' : 'Activate'} User</p>
+                          </TooltipContent>
+                        </Tooltip>
                       </Button>
                     </div>
                   </td>
