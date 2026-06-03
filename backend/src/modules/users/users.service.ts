@@ -139,6 +139,7 @@ export class UsersService {
 
   async adminResetPassword(
     userId: string,
+    adminId: string,
     dto: AdminResetPasswordDto,
   ): Promise<{ message: string }> {
     const user = await this.prisma.user.findUnique({
@@ -149,11 +150,36 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
+    const admin = await this.prisma.user.findUnique({
+      where: { id: adminId },
+    });
+
+    if (!admin) {
+      throw new NotFoundException('Admin user not found');
+    }
+
+    const isAdminPasswordValid = await bcrypt.compare(
+      dto.adminPassword,
+      admin.password,
+    );
+
+    if (!isAdminPasswordValid) {
+      throw new BadRequestException('Incorrect administrator password.');
+    }
+
     const hashedPassword = await bcrypt.hash(dto.newPassword, this.SALT_ROUNDS);
 
     await this.prisma.user.update({
       where: { id: userId },
       data: { password: hashedPassword },
+    });
+
+    await this.auditService.logAction({
+      userId: adminId,
+      action: AuditAction.USER_PASSWORD_CHANGED,
+      entityType: EntityType.User,
+      entityId: userId,
+      newValue: { message: 'Admin reset user password' },
     });
 
     return { message: 'Password reset successfully' };

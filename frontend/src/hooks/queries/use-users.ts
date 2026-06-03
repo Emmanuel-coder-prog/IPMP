@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { usersApi } from '@/lib/api/endpoints';
-import type { Role } from '@/lib/api/types';
-import { toast } from 'sonner';
-import { getErrorMessage } from '@/lib/api/client';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { usersApi } from "@/lib/api/endpoints";
+import type { Role } from "@/lib/api/types";
+import { toast } from "sonner";
+import { getErrorMessage } from "@/lib/api/client";
 
 export const userKeys = {
-  all: ['users'] as const,
-  me: ['users', 'me'] as const,
+  all: ["users"] as const,
+  me: ["users", "me"] as const,
 };
 
 export function useUsers() {
@@ -23,7 +23,8 @@ export function useUsers() {
 
 export function useUserMutations() {
   const qc = useQueryClient();
-  const invalidate = () => void qc.invalidateQueries({ queryKey: userKeys.all });
+  const invalidate = () =>
+    void qc.invalidateQueries({ queryKey: userKeys.all });
 
   const create = useMutation({
     mutationFn: (data: {
@@ -35,7 +36,7 @@ export function useUserMutations() {
     }) => usersApi.create(data),
     onSuccess: () => {
       invalidate();
-      toast.success('User created');
+      toast.success("User created");
     },
     onError: (e) => toast.error(getErrorMessage(e)),
   });
@@ -50,15 +51,22 @@ export function useUserMutations() {
     }) => usersApi.update(id, data),
     onSuccess: () => {
       invalidate();
-      toast.success('User updated');
+      toast.success("User updated");
     },
     onError: (e) => toast.error(getErrorMessage(e)),
   });
 
   const resetPassword = useMutation({
-    mutationFn: ({ id, newPassword }: { id: string; newPassword: string }) =>
-      usersApi.resetPassword(id, newPassword),
-    onSuccess: () => toast.success('Password reset'),
+    mutationFn: ({
+      id,
+      adminPassword,
+      newPassword,
+    }: {
+      id: string;
+      adminPassword: string;
+      newPassword: string;
+    }) => usersApi.resetPassword(id, adminPassword, newPassword),
+    onSuccess: () => toast.success("Password reset"),
     onError: (e) => toast.error(getErrorMessage(e)),
   });
 
@@ -66,7 +74,7 @@ export function useUserMutations() {
     mutationFn: (id: string) => usersApi.delete(id),
     onSuccess: () => {
       invalidate();
-      toast.success('User deleted');
+      toast.success("User deleted");
     },
     onError: (e) => toast.error(getErrorMessage(e)),
   });

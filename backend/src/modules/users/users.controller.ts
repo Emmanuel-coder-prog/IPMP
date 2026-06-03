@@ -84,9 +84,10 @@ export class UsersController {
   @HttpCode(HttpStatus.OK)
   async adminResetPassword(
     @Param('id') id: string,
+    @GetUser('id') adminId: string,
     @Body() dto: AdminResetPasswordDto,
   ): Promise<{ message: string }> {
-    return await this.usersService.adminResetPassword(id, dto);
+    return await this.usersService.adminResetPassword(id, adminId, dto);
   }
 
   @Delete('me')

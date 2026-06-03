@@ -1,4 +1,4 @@
-import { apiClient } from '@/lib/api/client';
+import { apiClient } from "@/lib/api/client";
 import type {
   AuditLog,
   AuthResponse,
@@ -19,36 +19,39 @@ import type {
   VerificationStatus,
   WorkflowListDetail,
   WorkflowListSummary,
-} from '@/lib/api/types';
+} from "@/lib/api/types";
 
 export const authApi = {
   login: (email: string, password: string) =>
-    apiClient.post<AuthResponse>('/auth/login', { email, password }),
-  logout: () => apiClient.post('/auth/logout'),
+    apiClient.post<AuthResponse>("/auth/login", { email, password }),
+  logout: () => apiClient.post("/auth/logout"),
   refresh: (refreshToken: string) =>
     apiClient.post<AuthResponse>(
-      '/auth/refresh',
+      "/auth/refresh",
       {},
       { headers: { Authorization: `Bearer ${refreshToken}` } },
     ),
 };
 
 export const usersApi = {
-  me: () => apiClient.get<User>('/users/me'),
+  me: () => apiClient.get<User>("/users/me"),
   changePassword: (data: { currentPassword: string; newPassword: string }) =>
-    apiClient.patch<{ message: string }>('/users/me/password', data),
-  list: () => apiClient.get<User[]>('/users'),
+    apiClient.patch<{ message: string }>("/users/me/password", data),
+  list: () => apiClient.get<User[]>("/users"),
   create: (data: {
     email: string;
     password: string;
     role: Role;
     firstName?: string;
     lastName?: string;
-  }) => apiClient.post<User>('/users', data),
+  }) => apiClient.post<User>("/users", data),
   update: (id: string, data: Partial<User & { isActive?: boolean }>) =>
     apiClient.patch<User>(`/users/${id}`, data),
-  resetPassword: (id: string, newPassword: string) =>
-    apiClient.post(`/users/${id}/reset-password`, { newPassword }),
+  resetPassword: (id: string, adminPassword: string, newPassword: string) =>
+    apiClient.post(`/users/${id}/reset-password`, {
+      adminPassword,
+      newPassword,
+    }),
   delete: (id: string) => apiClient.delete(`/users/${id}`),
 };
 
@@ -58,8 +61,8 @@ export const productsApi = {
     limit?: number;
     search?: string;
     categoryId?: string;
-  }) => apiClient.get<PaginatedResponse<Product>>('/products', { params }),
-  skuPreview: () => apiClient.get<{ sku: string }>('/products/sku-preview'),
+  }) => apiClient.get<PaginatedResponse<Product>>("/products", { params }),
+  skuPreview: () => apiClient.get<{ sku: string }>("/products/sku-preview"),
   get: (id: string) => apiClient.get<Product>(`/products/${id}`),
   create: (data: {
     name: string;
@@ -70,7 +73,7 @@ export const productsApi = {
     imageUrl?: string;
     productDetails?: string;
     description?: string;
-  }) => apiClient.post<Product>('/products', data),
+  }) => apiClient.post<Product>("/products", data),
   update: (
     id: string,
     data: Partial<{
@@ -88,7 +91,7 @@ export const productsApi = {
 
 export const listsApi = {
   create: (data: { name: string; type: ListType }) =>
-    apiClient.post<WorkflowListSummary>('/lists', data),
+    apiClient.post<WorkflowListSummary>("/lists", data),
   list: (params?: {
     type?: ListType;
     from?: string;
@@ -96,12 +99,12 @@ export const listsApi = {
     page?: number;
     limit?: number;
   }) =>
-    apiClient.get<ListsPaginatedResponse<WorkflowListSummary>>('/lists', {
+    apiClient.get<ListsPaginatedResponse<WorkflowListSummary>>("/lists", {
       params,
     }),
   get: (id: string, includeRemoved?: boolean) =>
     apiClient.get<WorkflowListDetail>(`/lists/${id}`, {
-      params: includeRemoved ? { includeRemoved: 'true' } : undefined,
+      params: includeRemoved ? { includeRemoved: "true" } : undefined,
     }),
 };
 
@@ -148,20 +151,20 @@ export const listItemsApi = {
     sourceItemIds: string[];
     purchaseListId?: string;
     newPurchaseList?: { name: string };
-  }) => apiClient.post<ListItem[]>('/list-items/move-to-purchase', data),
+  }) => apiClient.post<ListItem[]>("/list-items/move-to-purchase", data),
   moveToAcquired: (data: {
     sourceItemIds: string[];
     acquiredListId?: string;
     newAcquiredList?: { name: string };
-  }) => apiClient.post<ListItem[]>('/list-items/move-to-acquired', data),
+  }) => apiClient.post<ListItem[]>("/list-items/move-to-acquired", data),
   rollback: (id: string) =>
     apiClient.post<ListItem>(`/list-items/${id}/rollback`),
 };
 
 export const categoriesApi = {
-  list: () => apiClient.get<Category[]>('/categories'),
+  list: () => apiClient.get<Category[]>("/categories"),
   get: (id: string) => apiClient.get<Category>(`/categories/${id}`),
-  create: (name: string) => apiClient.post<Category>('/categories', { name }),
+  create: (name: string) => apiClient.post<Category>("/categories", { name }),
   update: (id: string, name: string) =>
     apiClient.patch<Category>(`/categories/${id}`, { name }),
 };
@@ -174,7 +177,7 @@ export const verificationsApi = {
     limit?: number;
   }) =>
     apiClient.get<PaginatedResponse<InventoryVerification>>(
-      '/inventory-verifications',
+      "/inventory-verifications",
       { params },
     ),
   create: (data: {
@@ -182,8 +185,7 @@ export const verificationsApi = {
     expectedQuantity: number;
     actualQuantity: number;
     notes?: string;
-  }) =>
-    apiClient.post<InventoryVerification>('/inventory-verifications', data),
+  }) => apiClient.post<InventoryVerification>("/inventory-verifications", data),
   update: (
     id: string,
     data: Partial<{
@@ -199,8 +201,8 @@ export const verificationsApi = {
 };
 
 export const pricingApi = {
-  getActive: () => apiClient.get<PricingSetting>('/pricing/settings/active'),
-  list: () => apiClient.get<PricingSetting[]>('/pricing/settings'),
+  getActive: () => apiClient.get<PricingSetting>("/pricing/settings/active"),
+  list: () => apiClient.get<PricingSetting[]>("/pricing/settings"),
   create: (data: {
     investmentFundRate: number;
     operationProfitRate: number;
@@ -210,7 +212,7 @@ export const pricingApi = {
     salesTaxRate20: number;
     salesTaxRate4: number;
     name?: string;
-  }) => apiClient.post<PricingSetting>('/pricing/settings', data),
+  }) => apiClient.post<PricingSetting>("/pricing/settings", data),
   activate: (id: string) =>
     apiClient.patch<PricingSetting>(`/pricing/settings/${id}/activate`),
 };
@@ -223,27 +225,27 @@ export const auditApi = {
     entityId?: string;
     userId?: string;
     search?: string;
-  }) => apiClient.get<PaginatedResponse<AuditLog>>('/audit', { params }),
+  }) => apiClient.get<PaginatedResponse<AuditLog>>("/audit", { params }),
 };
 
 export const notificationsApi = {
   list: (params?: { page?: number; limit?: number; unreadOnly?: boolean }) =>
-    apiClient.get<PaginatedResponse<Notification>>('/notifications', {
+    apiClient.get<PaginatedResponse<Notification>>("/notifications", {
       params,
     }),
   markRead: (id: string) => apiClient.patch(`/notifications/${id}/read`),
-  markAllRead: () => apiClient.patch('/notifications/read-all'),
+  markAllRead: () => apiClient.patch("/notifications/read-all"),
 };
 
 export const invitationsApi = {
-  list: () => apiClient.get<Invitation[]>('/invitations'),
+  list: () => apiClient.get<Invitation[]>("/invitations"),
   create: (email: string, role: Role) =>
-    apiClient.post<Invitation>('/invitations', { email, role }),
+    apiClient.post<Invitation>("/invitations", { email, role }),
   revoke: (id: string) => apiClient.delete(`/invitations/${id}`),
   accept: (data: {
     token: string;
     password: string;
     firstName?: string;
     lastName?: string;
-  }) => apiClient.post('/invitations/accept', data),
+  }) => apiClient.post("/invitations/accept", data),
 };
