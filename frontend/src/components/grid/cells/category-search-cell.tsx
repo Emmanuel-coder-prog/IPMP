@@ -1,43 +1,29 @@
 'use client';
 
-import {
-  forwardRef,
-  useEffect,
-  useImperativeHandle,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
-import type { ICellEditorParams } from 'ag-grid-community';
-import type { Category } from '@/lib/api/types';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type { CustomCellEditorProps } from 'ag-grid-react';
+import type { Category, ListItem } from '@/lib/api/types';
 import { categoriesApi } from '@/lib/api/endpoints';
 import { cn } from '@/lib/utils';
 
-export interface CategorySearchCellParams extends ICellEditorParams {
+export interface CategorySearchCellParams
+  extends CustomCellEditorProps<ListItem, string | null | undefined> {
   categories: Category[];
   onCategoryCreated?: (category: Category) => void;
 }
 
-export const CategorySearchCellEditor = forwardRef(function CategorySearchCellEditor(
-  props: CategorySearchCellParams,
-  ref,
-) {
+export function CategorySearchCellEditor(props: CategorySearchCellParams) {
   const initialName =
     typeof props.value === 'string'
       ? props.value
-      : (props.data?.product?.category?.name ?? '');
+      : typeof props.initialValue === 'string'
+        ? props.initialValue
+        : (props.data?.product?.category?.name ?? '');
   const [query, setQuery] = useState(initialName);
   const [open, setOpen] = useState(true);
   const [categories, setCategories] = useState<Category[]>(props.categories ?? []);
   const [creating, setCreating] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  useImperativeHandle(ref, () => ({
-    getValue: () => selectedNameRef.current,
-    isCancelBeforeStart: () => false,
-  }));
-
-  const selectedNameRef = useRef(initialName);
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -55,11 +41,11 @@ export const CategorySearchCellEditor = forwardRef(function CategorySearchCellEd
   const showCreate = query.trim().length > 0 && !exactMatch && !creating;
 
   const selectCategory = (category: Category) => {
-    selectedNameRef.current = category.name;
     if (props.data?.product) {
       props.data.product.categoryId = category.id;
       props.data.product.category = category;
     }
+    props.onValueChange(category.name);
     props.stopEditing();
   };
 
@@ -79,7 +65,7 @@ export const CategorySearchCellEditor = forwardRef(function CategorySearchCellEd
 
   return (
     <div
-      className="w-full min-w-[200px] border border-primary bg-background shadow-md"
+      className="ag-custom-component-popup w-full min-w-[200px] border border-primary bg-background shadow-md"
       onKeyDown={(e) => e.stopPropagation()}
     >
       <input
@@ -138,4 +124,4 @@ export const CategorySearchCellEditor = forwardRef(function CategorySearchCellEd
       )}
     </div>
   );
-});
+}

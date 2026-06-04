@@ -38,6 +38,7 @@ function imageCellRenderer(params: ICellRendererParams<ListItemGridRow>) {
 
 function partyFieldSetter(field: 'sources' | 'requestedBy' | 'stockOwner') {
   return {
+    valueGetter: (p: { data?: ListItemGridRow }) => p.data?.[field] ?? [],
     valueSetter: (p: { data?: ListItemGridRow; newValue: unknown }) => {
       if (!p.data) return false;
       const next = Array.isArray(p.newValue)

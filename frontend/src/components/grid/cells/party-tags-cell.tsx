@@ -1,13 +1,8 @@
 'use client';
 
-import {
-  forwardRef,
-  useEffect,
-  useImperativeHandle,
-  useRef,
-  useState,
-} from 'react';
-import type { ICellEditorParams, ICellRendererParams } from 'ag-grid-community';
+import { useEffect, useRef, useState } from 'react';
+import type { ICellRendererParams } from 'ag-grid-community';
+import type { CustomCellEditorProps } from 'ag-grid-react';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -40,18 +35,15 @@ export function PartyTagsCellRenderer(params: ICellRendererParams) {
   );
 }
 
-export const PartyTagsCellEditor = forwardRef(function PartyTagsCellEditor(
-  props: ICellEditorParams,
-  ref,
+export function PartyTagsCellEditor(
+  props: CustomCellEditorProps<unknown, string[] | null | undefined>,
 ) {
-  const [tags, setTags] = useState<string[]>(() => parseTags(props.value));
+  const [tags, setTags] = useState<string[]>(() =>
+    parseTags(props.value ?? props.initialValue),
+  );
   const [input, setInput] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
-
-  useImperativeHandle(ref, () => ({
-    getValue: () => tags,
-    isCancelBeforeStart: () => false,
-  }));
+  const { onValueChange } = props;
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -60,14 +52,22 @@ export const PartyTagsCellEditor = forwardRef(function PartyTagsCellEditor(
   const addTag = (raw: string) => {
     const trimmed = raw.trim();
     if (!trimmed) return;
-    const lower = trimmed.toLowerCase();
-    if (tags.some((t) => t.toLowerCase() === lower)) return;
-    setTags((prev) => [...prev, trimmed]);
+    setTags((prev) => {
+      const lower = trimmed.toLowerCase();
+      if (prev.some((t) => t.toLowerCase() === lower)) return prev;
+      const next = [...prev, trimmed];
+      onValueChange(next);
+      return next;
+    });
     setInput('');
   };
 
   const removeTag = (index: number) => {
-    setTags((prev) => prev.filter((_, i) => i !== index));
+    setTags((prev) => {
+      const next = prev.filter((_, i) => i !== index);
+      onValueChange(next);
+      return next;
+    });
   };
 
   return (
@@ -113,4 +113,4 @@ export const PartyTagsCellEditor = forwardRef(function PartyTagsCellEditor(
       />
     </div>
   );
-});
+}
