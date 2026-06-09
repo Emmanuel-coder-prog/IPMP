@@ -5,6 +5,16 @@
   "author": "",
   "private": true,
   "license": "UNLICENSED",
+
+
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@prisma/engines",
+      "prisma",
+      "bcrypt"
+    ]
+  },
+  
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
