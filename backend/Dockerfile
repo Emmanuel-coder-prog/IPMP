@@ -8,6 +8,7 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
 
 COPY package.json pnpm-lock.yaml ./
+COPY pnpm-workspace.yaml ./
 COPY prisma ./prisma/
 RUN pnpm --version
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
@@ -29,6 +30,7 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 WORKDIR /app
 
 COPY package.json pnpm-lock.yaml ./
+COPY pnpm-workspace.yaml ./
 COPY prisma ./prisma/
 
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
