@@ -3,12 +3,12 @@ name: PR CI
 on:
   push:
     branches:
-      - feature/**
+      - feature
     paths:
       - backend/**
   pull_request:
     branches:
-      - feature/**
+      - feature
     paths:
       - backend/**
 
