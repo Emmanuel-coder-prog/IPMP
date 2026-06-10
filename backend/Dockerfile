@@ -45,4 +45,4 @@ ENV NODE_ENV=production
 
 EXPOSE 3000
 
-CMD ["sh", "-c", "pnpm prisma migrate deploy && node dist/src/main"]
+CMD ["sh", "-c", "node dist/src/main"]
