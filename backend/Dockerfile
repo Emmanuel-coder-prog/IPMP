@@ -43,6 +43,8 @@ COPY prisma ./prisma/
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
     pnpm install --prod --frozen-lockfile
 
+RUN pnpm prisma generate
+
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/package.json ./package.json
