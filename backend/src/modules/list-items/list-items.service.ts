@@ -171,7 +171,7 @@ export class ListItemsService {
   }
 
   private async reloadItem(tx: PrismaTx, id: string) {
-    return tx.listItem.findUniqueOrThrow({
+    return await tx.listItem.findUniqueOrThrow({
       where: { id },
       include: listItemInclude,
     });

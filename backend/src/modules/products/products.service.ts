@@ -56,7 +56,7 @@ export class ProductsService {
   }
 
   async findBySku(sku: string) {
-    return this.prisma.product.findUnique({
+    return await this.prisma.product.findUnique({
       where: { sku },
       include: productInclude,
     });

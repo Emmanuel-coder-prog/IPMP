@@ -81,7 +81,7 @@ export class PricingService {
   }
 
   async findAll() {
-    return this.prisma.pricingSetting.findMany({
+    return await this.prisma.pricingSetting.findMany({
       orderBy: { createdAt: 'desc' },
     });
   }
